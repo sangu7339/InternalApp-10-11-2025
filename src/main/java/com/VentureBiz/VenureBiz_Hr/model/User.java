@@ -1,0 +1,35 @@
+
+package com.VentureBiz.VenureBiz_Hr.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String email;  // keep username
+
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+    
+    
+    private java.time.LocalDateTime passwordUpdatedAt;
+
+    // ✅ Optional helper method (not persisted)
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.passwordUpdatedAt = java.time.LocalDateTime.now();
+    }
+}
