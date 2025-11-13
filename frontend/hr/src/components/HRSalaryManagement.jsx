@@ -1668,6 +1668,13 @@ const HRSalaryManagement = () => {
     month: ''
   });
   const [editingBonus, setEditingBonus] = useState(null);
+
+
+
+  // ------------------ Salary Hike state ------------------
+const [hikeEmployeeId, setHikeEmployeeId] = useState('');
+const [hikePercentage, setHikePercentage] = useState('');
+
   // ------------------ Data state ------------------
   const [salaryPackages, setSalaryPackages] = useState([]);
   const [monthlySalaries, setMonthlySalaries] = useState([]);
@@ -1763,46 +1770,111 @@ const HRSalaryManagement = () => {
     }
   };
   // ------------------ Salary Package Submit ------------------
-  const handleSalaryPackageSubmit = async (e) => {
-    e.preventDefault();
-    if (accountNumber !== confirmAccountNumber) {
-      setMessage({ type: 'error', text: 'Account numbers do not match' });
-      return;
-    }
-    setLoading(true);
-   
-    const payload = {
-      basic: parseFloat(basic) || 0,
-      flexibleBenefitPlan: parseFloat(flexibleBenefitPlan) || 0,
-      specialAllowance: parseFloat(specialAllowance) || 0,
-      pfContributionEmployer: parseFloat(pfContributionEmployer) || 0,
-      professionalTax: parseFloat(professionalTax) || 0,
-      totalCostToCompany: parseFloat(totalCostToCompany) || 0,
-      bankName,
-      accountNumber,
-      ifscCode, // ✅ Added IFSC to payload
-      pfNumber,
-      uanNumber,
-      esiNumber,
-      panNumber,
-      lop: parseFloat(lop) || 0,
-    };
-    try {
-      await axios.post(
-        `http://localhost:8080/api/hr/salary/package?employeeId=${employeeId}`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setMessage({ type: 'success', text: `Salary package saved for employee ${employeeId}` });
-      resetForm();
-      fetchSalaryPackages();
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Error saving salary package' });
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+
+
+  // ------------------ Salary Package Submit ------------------
+const handleSalaryPackageSubmit = async (e) => {
+  e.preventDefault();
+
+  if (accountNumber !== confirmAccountNumber) {
+    setMessage({ type: 'error', text: 'Account numbers do not match' });
+    return;
+  }
+
+  setLoading(true);
+
+  const payload = {
+    basic: parseFloat(basic) || 0,
+    flexibleBenefitPlan: parseFloat(flexibleBenefitPlan) || 0,
+    specialAllowance: parseFloat(specialAllowance) || 0,
+    pfContributionEmployer: parseFloat(pfContributionEmployer) || 0,
+    professionalTax: parseFloat(professionalTax) || 0,
+    totalCostToCompany: parseFloat(totalCostToCompany) || 0,
+    bankName,
+    accountNumber,
+    ifscCode,
+    pfNumber,
+    uanNumber,
+    esiNumber,
+    panNumber,
+    lop: parseFloat(lop) || 0,
   };
+
+  try {
+    // Create salary package (backend now blocks duplicates)
+    await axios.post(
+      `http://localhost:8080/api/hr/salary/package?employeeId=${employeeId}`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setMessage({
+      type: 'success',
+      text: `✅ Salary package created for employee ${employeeId}`,
+    });
+
+    resetForm();
+    fetchSalaryPackages();
+
+  } catch (err) {
+    if (err.response && err.response.status === 409) {
+      // 🚫 Duplicate salary package detected
+      setMessage({
+        type: 'error',
+        text: `❌ Salary package already exists for employee ${employeeId}. Duplicate not allowed.`,
+      });
+    } else {
+      console.error(err);
+      setMessage({
+        type: 'error',
+        text: '❌ Error saving salary package. Please try again later.',
+      });
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const handleSalaryPackageSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (accountNumber !== confirmAccountNumber) {
+  //     setMessage({ type: 'error', text: 'Account numbers do not match' });
+  //     return;
+  //   }
+  //   setLoading(true);
+   
+  //   const payload = {
+  //     basic: parseFloat(basic) || 0,
+  //     flexibleBenefitPlan: parseFloat(flexibleBenefitPlan) || 0,
+  //     specialAllowance: parseFloat(specialAllowance) || 0,
+  //     pfContributionEmployer: parseFloat(pfContributionEmployer) || 0,
+  //     professionalTax: parseFloat(professionalTax) || 0,
+  //     totalCostToCompany: parseFloat(totalCostToCompany) || 0,
+  //     bankName,
+  //     accountNumber,
+  //     ifscCode, // ✅ Added IFSC to payload
+  //     pfNumber,
+  //     uanNumber,
+  //     esiNumber,
+  //     panNumber,
+  //     lop: parseFloat(lop) || 0,
+  //   };
+  //   try {
+  //     await axios.post(
+  //       `http://localhost:8080/api/hr/salary/package?employeeId=${employeeId}`,
+  //       payload,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setMessage({ type: 'success', text: `Salary package saved for employee ${employeeId}` });
+  //     resetForm();
+  //     fetchSalaryPackages();
+  //   } catch (err) {
+  //     setMessage({ type: 'error', text: 'Error saving salary package' });
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const resetForm = () => {
     setEmployeeId('');
     setBasic('');
@@ -2982,7 +3054,7 @@ const HRSalaryManagement = () => {
                       <th style={styles.th}>Employee</th>
                       <th style={styles.th}>Incentives</th>
                       <th style={styles.th}>Month</th>
-                      <th style={styles.th}>Date Added</th>
+                      {/* <th style={styles.th}>Date Added</th> */}
                       <th style={styles.th}>Actions</th>
                     </tr>
                   </thead>

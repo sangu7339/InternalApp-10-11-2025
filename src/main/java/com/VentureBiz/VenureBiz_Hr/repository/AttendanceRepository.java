@@ -105,5 +105,12 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     // ✅ Count all ABSENT records for a specific date
     long countByDateAndStatus(LocalDate date, String status);
+    
+    
+    @Query("SELECT COUNT(DISTINCT a.user.id) FROM Attendance a " +
+    	       "WHERE a.date = :date AND a.user.id IN (" +
+    	       "SELECT b.user.id FROM Attendance b WHERE b.date = :date AND b.status = 'ABSENT')")
+    	long countEmployeesWithCheckinAndAbsentSameDay(@Param("date") LocalDate date);
+
 }
 
