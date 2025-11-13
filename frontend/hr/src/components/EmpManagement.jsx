@@ -85,17 +85,16 @@ Login Credentials:
 Username: ${employeeData.email}
 Password: ${employeeData.email}
 Please use these credentials to access the employee portal.
-Our Company Details:
-📍 Address: #2085/16, 2nd Floor, Spoorthi, Wilson Garden Society Layout,
-   Puttenahalli Main Road, JP Nagar 7th Phase, Bangalore - 560078
-🌐 Website: www.venturebiz.in
-📞 Contact: +91 9008522366
-📧 Email: info@venturebiz.in | hr@venturebiz.in
 As a new employee of VentureBiz, you are now part of a dynamic team dedicated to innovation and excellence. We look forward to your valuable contributions and growth with our company.
 Please feel free to reach out to the HR department if you have any questions or need assistance.
 Best regards,
 HR Team
 VentureBiz
+ Address: #2085/16, 2nd Floor, Spoorthi, Wilson Garden Society Layout,
+ Puttenahalli Main Road, JP Nagar 7th Phase, Bangalore - 560078
+Website: www.venturebiz.in
+Contact: +91 9008522366
+Email: info@venturebiz.in | hr@venturebiz.in
     `.trim();
     const mailtoLink = `mailto:${employeeData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoLink, '_blank');
@@ -201,11 +200,22 @@ if (!isVentureEmail(formData.email)) {
   );
   return;
 }
+// ❌ Block adding employee with HR email (but allow editing existing HR user)
+if (!editing && formData.email.trim().toLowerCase() === "hr@venturebiz.in") {
+  alert("⚠️ You cannot add an employee using hr@venturebiz.in");
+  return;
+}
 
 // ✅ CHECK FOR EXISTING EMAIL BEFORE SUBMIT
 const emailExists = employees.some(
   (emp) => emp.user?.email?.toLowerCase() === formData.email.toLowerCase()
 );
+// ❌ Block adding employee with HR email (but allow editing existing HR user)
+if (!editing && formData.email.trim().toLowerCase() === "hr@venturebiz.in") {
+  alert("⚠️ You cannot add an employee using hr@venturebiz.in");
+  return;
+}
+
 if (!editing && emailExists) {
   alert("E-mail already exists. Please use a different email address.");
   return;

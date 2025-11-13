@@ -300,6 +300,67 @@ public class HrController {
 //                    .body("❌ Failed to add employee: " + e.getMessage());
 //        }
 //    }
+//    @PostMapping("/employees")
+//    @PreAuthorize("hasRole('HR')")
+//    public ResponseEntity<?> addEmployee(@RequestBody Employee employee) {
+//        try {
+//            User userInput = employee.getUser();
+//
+//            if (userInput == null || userInput.getEmail() == null || userInput.getEmail().isBlank()) {
+//                return ResponseEntity.badRequest().body("⚠️ Employee must have an email for user account creation.");
+//            }
+//
+//            // 🔹 Check if user already exists
+//            User user = userRepository.findByEmail(userInput.getEmail()).orElse(null);
+//
+//            if (user == null) {
+//                // 🔹 Create new user if not found
+//                user = new User();
+//                user.setEmail(userInput.getEmail());
+//                user.setRole(com.VentureBiz.VenureBiz_Hr.model.Role.EMPLOYEE);
+//
+//                // ✅ Default password is the employee's email
+//                String password = userInput.getPassword();
+//                if (password == null || password.isBlank()) {
+//                    password = userInput.getEmail();
+//                }
+//
+//                user.setPassword(passwordEncoder.encode(password));
+//                userRepository.save(user);
+//            } else if (employeeRepository.findByUser_Email(user.getEmail()).isPresent()) {
+//                return ResponseEntity.status(409)
+//                        .body("⚠️ Employee already exists for user: " + user.getEmail());
+//            }
+//
+//            // 🔹 Link user to employee
+//            employee.setUser(user);
+//
+//            // Default date of joining
+//            if (employee.getDateOfJoining() == null) {
+//                employee.setDateOfJoining(LocalDate.now());
+//            }
+//
+//            // Default status
+//            if (employee.getStatus() == null) {
+//                employee.setStatus(com.VentureBiz.VenureBiz_Hr.model.Status.ACTIVE);
+//            }
+//
+//            Employee saved = employeeRepository.save(employee);
+//
+//            return ResponseEntity.ok(Map.of(
+//                    "message", "✅ Employee and user account created successfully.",
+//                    "employeeId", saved.getEmployeeId(),
+//                    "userEmail", user.getEmail()
+//            ));
+//
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("❌ Failed to add employee: " + e.getMessage());
+//        }
+//    }
+    
     @PostMapping("/employees")
     @PreAuthorize("hasRole('HR')")
     public ResponseEntity<?> addEmployee(@RequestBody Employee employee) {
@@ -310,40 +371,41 @@ public class HrController {
                 return ResponseEntity.badRequest().body("⚠️ Employee must have an email for user account creation.");
             }
 
+            String email = userInput.getEmail();
+
             // 🔹 Check if user already exists
-            User user = userRepository.findByEmail(userInput.getEmail()).orElse(null);
+            User user = userRepository.findByEmail(email).orElse(null);
 
             if (user == null) {
-                // 🔹 Create new user if not found
+                // 🔹 IF USER DOES NOT EXIST → CREATE ONE
                 user = new User();
-                user.setEmail(userInput.getEmail());
+                user.setEmail(email);
                 user.setRole(com.VentureBiz.VenureBiz_Hr.model.Role.EMPLOYEE);
 
-                // ✅ Default password is the employee's email
-                String password = userInput.getPassword();
-                if (password == null || password.isBlank()) {
-                    password = userInput.getEmail();
-                }
+                // Default password: email or given
+                String password = (userInput.getPassword() == null || userInput.getPassword().isBlank())
+                        ? email
+                        : userInput.getPassword();
 
                 user.setPassword(passwordEncoder.encode(password));
                 userRepository.save(user);
-            } else if (employeeRepository.findByUser_Email(user.getEmail()).isPresent()) {
-                return ResponseEntity.status(409)
-                        .body("⚠️ Employee already exists for user: " + user.getEmail());
+            } else {
+                // 🔹 USER EXISTS → CHECK IF EMPLOYEE ALREADY LINKED
+                if (employeeRepository.findByUser(user).isPresent()) {
+                    return ResponseEntity.status(409)
+                            .body("⚠️ Employee already exists for user email: " + email);
+                }
             }
 
             // 🔹 Link user to employee
             employee.setUser(user);
 
-            // Default date of joining
-            if (employee.getDateOfJoining() == null) {
+            // Default values
+            if (employee.getDateOfJoining() == null)
                 employee.setDateOfJoining(LocalDate.now());
-            }
 
-            // Default status
-            if (employee.getStatus() == null) {
+            if (employee.getStatus() == null)
                 employee.setStatus(com.VentureBiz.VenureBiz_Hr.model.Status.ACTIVE);
-            }
 
             Employee saved = employeeRepository.save(employee);
 
@@ -353,13 +415,13 @@ public class HrController {
                     "userEmail", user.getEmail()
             ));
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("❌ Failed to add employee: " + e.getMessage());
         }
     }
+    
+
 
 
     // ✅ Delete employee
